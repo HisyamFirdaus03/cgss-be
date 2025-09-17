@@ -1,0 +1,7 @@
+:3000 {
+    reverse_proxy /api/* ghgcope_be_1:4000 ghgcope_be_2:4000 ghgcope_be_3:4000 {
+        lb_policy round_robin
+    }
+    header {
+        -Server  # Remove the Server header
+    }

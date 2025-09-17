@@ -1,0 +1,55 @@
+x-common-service: &common-service
+  build:
+    context: .
+    dockerfile: Dockerfile
+  restart: unless-stopped
+  networks:
+    - default
+  labels:
+    - "traefik.enable=true"
+    - "traefik.http.routers.ghgcope.rule=PathPrefix(`/api`)"
+    - "traefik.http.services.ghgcope.loadbalancer.server.port=4000"
+    - "traefik.http.services.ghgcope.loadbalancer.server.scheme=http"
+  expose:
+    - "4000"
+  healthcheck:
+    test: [ "CMD-SHELL", "curl -f http://localhost:4000/api/health-check || exit 0" ]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+  env_file:
+    - .env
+    # - .env.docker-dev
+
+services:
+  ghgcope_be_1:
+    <<: *common-service
+    container_name: ghgcope_be_1
+
+  ghgcope_be_2:
+    <<: *common-service
+    container_name: ghgcope_be_2
+
+  ghgcope_be_3:
+    <<: *common-service
+    container_name: ghgcope_be_3
+
+  traefik:
+    image: traefik:v2.10
+    command:
+      - --api.insecure=true
+      - --providers.docker
+      - --providers.docker.exposedbydefault=false  # Only expose labeled containers
+      - --entrypoints.web.address=:80
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - default
+
+networks:
+  default:
+    name: ghgcope-be_default
+    driver: bridge

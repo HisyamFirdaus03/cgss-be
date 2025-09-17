@@ -1,0 +1,40 @@
+x-common-service: &common-service
+  build:
+    context: .
+    dockerfile: Dockerfile
+  restart: unless-stopped
+  networks:
+    - ghgcope-be
+    - coolify
+  labels:
+    - "coolify.expose=true"
+    - "coolify.name=ghgcope"
+    - "coolify.port=4000"
+    - "coolify.path=/api"
+  expose:
+    - "4000"
+  healthcheck:
+    test: [ "CMD-SHELL", "curl -f http://localhost:4000/api/health-check || exit 0" ]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+
+services:
+  ghgcope_be_1:
+    <<: *common-service
+    container_name: ghgcope_be_1
+
+  ghgcope_be_2:
+    <<: *common-service
+    container_name: ghgcope_be_2
+
+  ghgcope_be_3:
+    <<: *common-service
+    container_name: ghgcope_be_3
+
+networks:
+  ghgcope-be:
+    name: ghgcope-be
+    driver: bridge
+  coolify:
+    external: true

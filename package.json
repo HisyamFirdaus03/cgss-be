@@ -1,0 +1,102 @@
+{
+  "name": "loopack4-starter-pack",
+  "version": "0.0.1",
+  "description": "Basic `loopback4` application template with `Json Web Token` authentication and `Casbin` authorization `Identity Access Management` (IAM) scheme",
+  "keywords": [
+    "loopback-application",
+    "loopback"
+  ],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "lb-tsc --copy-resources && tsc-alias",
+    "build:prod": "npm run prestart && tsc --target es2021 --outDir ./dist",
+    "lint": "npm run eslint && npm run prettier:check",
+    "lint:fix": "npm run eslint:fix && npm run prettier:fix",
+    "prettier:cli": "lb-prettier \"**/*.ts\" \"**/*.js\"",
+    "prettier:check": "npm run prettier:cli -- -l",
+    "prettier:fix": "npm run prettier:cli -- --write",
+    "eslint": "lb-eslint --report-unused-disable-directives .",
+    "eslint:fix": "npm run eslint -- --fix",
+    "pretest": "npm run rebuild",
+    "test": "lb-mocha --allow-console-logs \"dist/__tests__\"",
+    "posttest": "npm run lint",
+    "test:dev": "lb-mocha --allow-console-logs dist/__tests__/**/*.js && npm run posttest",
+    "docker:build": "docker build -t basic-lb4-jwt-casbin-auth .",
+    "docker:run": "docker run -p 3000:3000 -d basic-lb4-jwt-casbin-auth",
+    "migrate": "npm run rebuild && node ./dist/migrations/migrate",
+    "preopenapi-spec": "npm run build",
+    "openapi-spec": "node ./dist/openapi-spec",
+    "prestart": "npm run rebuild",
+    "start:old": "export TZ=UTC; node -r source-map-support/register .",
+    "clean": "lb-clean dist *.tsbuildinfo .eslintcache",
+    "rebuild": "npm run clean && npm run build",
+    "start": "export TZ=UTC; npm run prestart && tsc-watch --target es2021 --outDir ./dist --onSuccess \"node .\"",
+    "start:db": "docker compose -f docker-compose-dev.yml up"
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "author": "",
+  "license": "",
+  "files": [
+    "README.md",
+    "dist",
+    "src",
+    "!*/__tests__"
+  ],
+  "dependencies": {
+    "@loopback/authentication": "^11.0.9",
+    "@loopback/authorization": "^0.15.9",
+    "@loopback/boot": "^7.0.9",
+    "@loopback/core": "^6.1.6",
+    "@loopback/cron": "^0.12.9",
+    "@loopback/repository": "^7.0.9",
+    "@loopback/rest": "^14.0.9",
+    "@loopback/rest-explorer": "^7.0.9",
+    "@loopback/security": "^0.11.9",
+    "@loopback/service-proxy": "^7.0.9",
+    "@types/bcrypt": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/nodemailer": "^6.4.17",
+    "bcrypt": "^5.1.1",
+    "casbin": "^5.36.0",
+    "check-password-strength": "^2.0.10",
+    "date-fns": "^3.6.0",
+    "debug": "^4.4.0",
+    "decimal.js": "^10.4.3",
+    "dotenv": "^16.4.7",
+    "email-validator": "^2.0.4",
+    "ioredis": "^5.4.2",
+    "jsonwebtoken": "^9.0.2",
+    "lodash": "^4.17.21",
+    "loopback-connector-mysql": "^7.0.17",
+    "nodemailer": "^6.9.16",
+    "tsconfig-paths": "^4.2.0",
+    "tslib": "^2.8.1"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^8.4.1",
+    "@loopback/build": "^11.0.8",
+    "@loopback/cli": "^6.2.0",
+    "@loopback/eslint-config": "^15.0.4",
+    "@loopback/testlab": "^7.0.8",
+    "@types/debug": "4.1.12",
+    "@types/lodash": "^4.17.14",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.10.5",
+    "eslint": "^9.17.0",
+    "source-map-support": "^0.5.21",
+    "tsc-alias": "^1.8.10",
+    "tsc-watch": "^6.2.1",
+    "typescript": "~5.5.4"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@scarf/scarf",
+      "bcrypt",
+      "loopback-connector-mysql"
+    ]
+  }
+}
