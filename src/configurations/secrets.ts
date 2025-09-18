@@ -36,7 +36,7 @@ export namespace JwtUserVerificationConfig {
 
 export namespace DatabaseConfig {
   export const host = process.env.DATABASE_HOST as string
-  export const port = process.env.DATABASE_PORT as string
+  export const port = parseInt(process.env.DATABASE_PORT || '3306', 10)
   export const user = process.env.DATABASE_USER as string
   export const password = process.env.DATABASE_PASSWORD as string
   export const DATABASE_LB4_PATH = process.env.DATABASE_LB4_PATH as string

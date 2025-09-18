@@ -1,0 +1,41 @@
+services:
+  db:
+    image: mariadb:latest
+    container_name: ghgcope_db
+    ports:
+      - "3306:3306"
+    environment:
+      - MARIADB_ROOT_PASSWORD=${DATABASE_PASSWORD}
+    volumes:
+      - mariadb_dev_data:/var/lib/mysql
+      - ./docker-compose-dev-init.sql:/docker-entrypoint-initdb.d/docker-compose-dev-init.sql
+    networks:
+      - ghgcope-be_default
+    healthcheck:
+      test: ["CMD", "mariadb-admin", "ping", "-h", "localhost", "-u", "root", "-p${DATABASE_PASSWORD}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  backend:
+    build:
+      context: .   # path to your backend repo (where Dockerfile is)
+      dockerfile: Dockerfile
+    container_name: ghgcope_backend
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "4000:4000"
+    env_file:
+      - .env
+    networks:
+      - ghgcope-be_default
+    restart: unless-stopped
+
+networks:
+  ghgcope-be_default:
+    external: true
+
+volumes:
+  mariadb_dev_data:
