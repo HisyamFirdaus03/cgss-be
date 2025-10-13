@@ -11,7 +11,7 @@ import { SecurityBindings, securityId, UserProfile } from '@loopback/security'
 @authenticate(JwtStrategy.UserAccessToken)
 export class EmissionScope3EmployeeCommutingController {
   constructor(
-    @inject(SecurityBindings.USER) private user: UserProfile,
+    @inject(SecurityBindings.USER, { optional: true }) private user: UserProfile,
     @repository(EmissionScope3EmployeeCommutingRepository)
     public thisRepo: EmissionScope3EmployeeCommutingRepository,
     @repository(UserGroupByMapRepository) private userGroupByMapRepository: UserGroupByMapRepository,
