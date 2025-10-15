@@ -66,3 +66,5 @@ typings/
 # Cache used by TypeScript's incremental build
 *.tsbuildinfo
 **/.DS_Store
+
+docker-compose-run.yml
