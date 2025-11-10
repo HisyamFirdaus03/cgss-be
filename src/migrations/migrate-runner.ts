@@ -7,6 +7,7 @@ import { EmissionFactorRepository } from '../repositories'
 import { EmissionFactor } from '../models'
 import { _2023 } from './version0/seed-emission-factor'
 import { initTenantDataSource } from '../index'
+import { addGroupHierarchy } from './version1/0-add-group-hierarchy'
 
 // run LB4_App for each target DB we want to run
 export async function migrate() {
@@ -25,6 +26,17 @@ export async function migrate() {
   const emissionFactors = (await emissionFactorRepository.findOne()) ?? ({ year: 2023, ..._2023['2023'] } as EmissionFactor)
 
   await app.migrateSchema({ existingSchema })
+
+  // Extract tenant database name from environment variable
+  // Example: datasources.db.cgss_demo -> cgss_demo
+  const dbPath = process.env.DATABASE_LB4_PATH as string
+  const tenantDb = dbPath.split('.').pop() || 'cgss_demo'
+
+  // Run custom hierarchy migration (adds indexes, foreign keys, constraints)
+  if (existingSchema === 'alter') {
+    console.log(`Running custom GroupBy hierarchy migration for ${tenantDb}...`)
+    await addGroupHierarchy(app, tenantDb)
+  }
 
   if (existingSchema === 'drop') {
     await seedGeneral(app)
