@@ -5,7 +5,9 @@
     "outDir": "dist",
     "types": ["node", "mocha"],
     "rootDir": "src",
-    "baseUrl": "./src/index.ts"
+    "baseUrl": "./src/index.ts",
+    "skipLibCheck": true,
+    "noEmitOnError": false
   },
   "include": ["src"],
   "experimentalDecorators": false
