@@ -10,15 +10,30 @@ const UserAccessGroupInstances = {
     description: 'System administrator with all access',
     priority: UserAccessLevel.priority.root,
   },
+  [UserAccessLevel.name.adminGHGGate]: {
+    name: UserAccessLevel.name.adminGHGGate,
+    description: 'GHG Gate Superadmin - Global access across all tenants, manage emission factors',
+    priority: UserAccessLevel.priority.adminGHGGate,
+  },
   [UserAccessLevel.name.adminSystem]: {
     name: UserAccessLevel.name.adminSystem,
     description: 'Admin system-level access',
     priority: UserAccessLevel.priority.adminSystem,
   },
+  [UserAccessLevel.name.adminHQ]: {
+    name: UserAccessLevel.name.adminHQ,
+    description: 'HQ Admin - Full control over HQ and all subsidiaries, can create subsidiary users',
+    priority: UserAccessLevel.priority.adminHQ,
+  },
   [UserAccessLevel.name.adminCompany]: {
     name: UserAccessLevel.name.adminCompany,
     description: 'Admin company-level access',
     priority: UserAccessLevel.priority.adminCompany,
+  },
+  [UserAccessLevel.name.adminSubsidiary]: {
+    name: UserAccessLevel.name.adminSubsidiary,
+    description: 'Subsidiary Admin - Can only view/edit own subsidiary, no sibling access',
+    priority: UserAccessLevel.priority.adminSubsidiary,
   },
   [UserAccessLevel.name.member]: {
     name: UserAccessLevel.name.member,
@@ -27,7 +42,7 @@ const UserAccessGroupInstances = {
   },
   [UserAccessLevel.name.guest]: {
     name: UserAccessLevel.name.guest,
-    description: 'Guest level access',
+    description: 'Guest level access - Read-only',
     priority: UserAccessLevel.priority.guest,
   },
   ////////////////////////////////////////////////////
@@ -51,8 +66,11 @@ const UserAccessGroupInstances = {
 
 export const _groups = [
   UserAccessGroupInstances[UserAccessLevel.name.root],
+  UserAccessGroupInstances[UserAccessLevel.name.adminGHGGate],
   UserAccessGroupInstances[UserAccessLevel.name.adminSystem],
+  UserAccessGroupInstances[UserAccessLevel.name.adminHQ],
   UserAccessGroupInstances[UserAccessLevel.name.adminCompany],
+  UserAccessGroupInstances[UserAccessLevel.name.adminSubsidiary],
   UserAccessGroupInstances[UserAccessLevel.name.member],
   UserAccessGroupInstances[UserAccessLevel.name.guest],
   // Scope-specific groups
@@ -203,6 +221,41 @@ export const _users: {
       },
       groups: ['emission-production-admin', 'scope1-viewer', 'scope2-viewer', 'scope3-viewer'],
       detail: { phoneNumber: '+607-4004004' },
+    },
+
+    // NEW: Hierarchy-aware roles
+    {
+      user: {
+        name: 'GHG Gate Superadmin',
+        username: 'ghg_admin',
+        email: 'ghg_admin@ghgcope.com',
+        password: p,
+        emailVerified: true,
+      },
+      groups: [UserAccessLevel.name.adminGHGGate, 'scope1-admin', 'scope2-admin', 'scope3-admin', 'emission-production-admin'],
+      detail: { phoneNumber: '+607-5005005' },
+    },
+    {
+      user: {
+        name: 'HQ Administrator',
+        username: 'hq_admin',
+        email: 'hq_admin@ghgcope.com',
+        password: p,
+        emailVerified: true,
+      },
+      groups: [UserAccessLevel.name.adminHQ, 'scope1-admin', 'scope2-admin', 'scope3-admin', 'emission-production-admin'],
+      detail: { phoneNumber: '+607-6006006' },
+    },
+    {
+      user: {
+        name: 'Subsidiary Administrator',
+        username: 'sub_admin',
+        email: 'sub_admin@ghgcope.com',
+        password: p,
+        emailVerified: true,
+      },
+      groups: [UserAccessLevel.name.adminSubsidiary, 'scope1-admin', 'scope2-admin', 'scope3-admin', 'emission-production-admin'],
+      detail: { phoneNumber: '+607-7007007' },
     },
   ]
 

@@ -14,7 +14,7 @@ export class EmissionFactorController {
   ) {}
 
   @post('/emission-factors')
-  @authorize({ allowedRoles: [UserAccessLevel.name.root, UserAccessLevel.name.adminSystem]})
+  @authorize({ allowedRoles: [UserAccessLevel.name.root, UserAccessLevel.name.adminGHGGate, UserAccessLevel.name.adminSystem]})
   @response(200, {
     description: 'EmissionFactor model instance',
     content: { 'application/json': { schema: getModelSchemaRef(EmissionFactor) } },
@@ -36,7 +36,7 @@ export class EmissionFactorController {
   }
 
   @get('/emission-factors')
-  @authorize({ allowedRoles: [UserAccessLevel.name.root, UserAccessLevel.name.adminSystem]})
+  @authorize({ allowedRoles: [UserAccessLevel.name.root, UserAccessLevel.name.adminGHGGate, UserAccessLevel.name.adminSystem]})
   @response(200, {
     description: 'Array of EmissionFactor model instances',
     content: {
@@ -53,7 +53,7 @@ export class EmissionFactorController {
   }
 
   @get('/emission-factors/{id}')
-  @authorize({ allowedRoles: [UserAccessLevel.name.root, UserAccessLevel.name.adminSystem]})
+  @authorize({ allowedRoles: [UserAccessLevel.name.root, UserAccessLevel.name.adminGHGGate, UserAccessLevel.name.adminSystem]})
   @response(200, {
     description: 'EmissionFactor model instance',
     content: {
@@ -70,7 +70,7 @@ export class EmissionFactorController {
   }
 
   @patch('/emission-factors/{id}')
-  @authorize({ allowedRoles: [UserAccessLevel.name.root, UserAccessLevel.name.adminSystem]})
+  @authorize({ allowedRoles: [UserAccessLevel.name.root, UserAccessLevel.name.adminGHGGate, UserAccessLevel.name.adminSystem]})
   @response(204, {
     description: 'EmissionFactor PATCH success',
   })
@@ -89,7 +89,7 @@ export class EmissionFactorController {
   }
 
   @put('/emission-factors/{id}')
-  @authorize({ allowedRoles: [UserAccessLevel.name.root, UserAccessLevel.name.adminSystem]})
+  @authorize({ allowedRoles: [UserAccessLevel.name.root, UserAccessLevel.name.adminGHGGate, UserAccessLevel.name.adminSystem]})
   @response(204, {
     description: 'EmissionFactor PUT success',
   })
@@ -98,7 +98,7 @@ export class EmissionFactorController {
   }
 
   @del('/emission-factors/{id}')
-  @authorize({ allowedRoles: [UserAccessLevel.name.root, UserAccessLevel.name.adminSystem]})
+  @authorize({ allowedRoles: [UserAccessLevel.name.root, UserAccessLevel.name.adminGHGGate, UserAccessLevel.name.adminSystem]})
   @response(204, {
     description: 'EmissionFactor DELETE success',
   })
@@ -124,7 +124,7 @@ export class EmissionFactorController {
   }
 
   @patch('/emission-factors')
-  @authorize({ allowedRoles: [UserAccessLevel.name.root, UserAccessLevel.name.adminSystem]})
+  @authorize({ allowedRoles: [UserAccessLevel.name.root, UserAccessLevel.name.adminGHGGate, UserAccessLevel.name.adminSystem]})
   @response(204, { description: 'EmissionFactor PATCH all success' })
   async updateAll(
     @requestBody({
@@ -152,7 +152,7 @@ export class EmissionFactorController {
   }
 
   @post('/emission-factors/add-year')
-  @authorize({ allowedRoles: [UserAccessLevel.name.root, UserAccessLevel.name.adminSystem]})
+  @authorize({ allowedRoles: [UserAccessLevel.name.root, UserAccessLevel.name.adminGHGGate, UserAccessLevel.name.adminSystem]})
   @response(200, {
     description: 'EmissionFactor model instance',
     content: { 'application/json': { schema: getModelSchemaRef(EmissionFactor) } },

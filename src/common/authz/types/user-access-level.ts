@@ -3,9 +3,12 @@ export namespace UserAccessLevel {
     none = '$none', // !! do not edit this
     root = 'root', // !! do not edit this
 
-    // User define roles
+    // User define roles (Hierarchy-aware)
+    adminGHGGate = 'admin-ghg-gate', // Superadmin - Global access across all tenants
     adminSystem = 'admin-system',
+    adminHQ = 'admin-hq', // HQ Admin - Full control over HQ and descendants
     adminCompany = 'admin-company',
+    adminSubsidiary = 'admin-subsidiary', // Subsidiary Admin - Own subsidiary only
     member = 'member',
     guest = 'guest',
 
@@ -22,22 +25,25 @@ export namespace UserAccessLevel {
   export enum priority {
     root = 1, // mandatory
 
-    // user define roles
-    adminSystem = 2,
-    adminCompany = 3,
-    member = 4,
-    guest = 5,
+    // user define roles (lower number = higher privilege)
+    adminGHGGate = 2, // Superadmin
+    adminSystem = 3,
+    adminHQ = 4, // HQ Admin
+    adminCompany = 5,
+    adminSubsidiary = 6, // Subsidiary Admin
+    member = 7,
+    guest = 8,
 
     // For internal use
-    rank_0 = 6,
-    owner_0 = 7,
+    rank_0 = 9,
+    owner_0 = 10,
 
-    group_0 = 8,
-    group_1 = 9,
+    group_0 = 11,
+    group_1 = 12,
 
-    anonymous = 12,
-    device = 13,
-    external = 14,
-    none = 15,
+    anonymous = 13,
+    device = 14,
+    external = 15,
+    none = 16,
   }
 }

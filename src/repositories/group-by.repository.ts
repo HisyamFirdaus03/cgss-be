@@ -413,6 +413,153 @@ export class GroupByRepository extends TimeStampRepositoryMixin<
       return acc
     }, {} as Record<string, Decimal>)
   }
+
+  /**
+   * Get all descendant group IDs recursively (children, grandchildren, etc.)
+   * @param groupId - The parent group ID
+   * @returns Array of all descendant group IDs
+   */
+  async getDescendantIds(groupId: number): Promise<number[]> {
+    const query = `
+      WITH RECURSIVE descendants AS (
+        SELECT id FROM GroupBy WHERE id = ?
+        UNION ALL
+        SELECT g.id FROM GroupBy g
+        INNER JOIN descendants d ON g.parentId = d.id
+      )
+      SELECT id FROM descendants WHERE id != ?
+    `
+    const result = await this.execute(query, [groupId, groupId]) as { id: number }[]
+    return result.map(r => r.id)
+  }
+
+  /**
+   * Get all ancestor group IDs recursively (parent, grandparent, etc.)
+   * @param groupId - The child group ID
+   * @returns Array of all ancestor group IDs (ordered from immediate parent to root)
+   */
+  async getAncestorIds(groupId: number): Promise<number[]> {
+    const query = `
+      WITH RECURSIVE ancestors AS (
+        SELECT id, parentId FROM GroupBy WHERE id = ?
+        UNION ALL
+        SELECT g.id, g.parentId FROM GroupBy g
+        INNER JOIN ancestors a ON g.id = a.parentId
+      )
+      SELECT id FROM ancestors WHERE id != ?
+    `
+    const result = await this.execute(query, [groupId, groupId]) as { id: number }[]
+    return result.map(r => r.id)
+  }
+
+  /**
+   * Get sibling group IDs (groups with the same parent)
+   * @param groupId - The group ID
+   * @returns Array of sibling group IDs (excluding the group itself)
+   */
+  async getSiblingIds(groupId: number): Promise<number[]> {
+    const group = await this.findById(groupId)
+
+    if (!group.parentId) {
+      // Root level - get all other root groups
+      const siblings = await this.find({
+        where: { parentId: null as any, id: { neq: groupId } },
+        fields: ['id'],
+      })
+      return siblings.map(s => s.id!)
+    }
+
+    // Get siblings with same parent
+    const siblings = await this.find({
+      where: { parentId: group.parentId, id: { neq: groupId } },
+      fields: ['id'],
+    })
+    return siblings.map(s => s.id!)
+  }
+
+  /**
+   * Build hierarchical tree structure
+   * @param rootId - Optional root group ID (if not provided, returns all root groups)
+   * @returns Nested tree structure
+   */
+  async buildTree(rootId?: number): Promise<GroupBy[]> {
+    const where = rootId ? { id: rootId } : { parentId: null as any }
+    const rootGroups = await this.find({
+      where,
+      include: [{ relation: 'children' }],
+    })
+
+    // Recursively load children
+    const loadChildren = async (group: GroupBy): Promise<GroupBy> => {
+      if (group.children && group.children.length > 0) {
+        group.children = await Promise.all(
+          group.children.map(async child => {
+            const fullChild = await this.findById(child.id!, {
+              include: [{ relation: 'children' }],
+            })
+            return loadChildren(fullChild)
+          })
+        )
+      }
+      return group
+    }
+
+    return Promise.all(rootGroups.map(loadChildren))
+  }
+
+  /**
+   * Validate hierarchy to prevent circular references
+   * @param groupId - The group being moved
+   * @param newParentId - The proposed new parent
+   * @throws Error if circular reference detected
+   */
+  async validateHierarchy(groupId: number, newParentId: number | null): Promise<boolean> {
+    if (!newParentId) return true // Moving to root is always valid
+    if (groupId === newParentId) {
+      throw new Error('Group cannot be its own parent')
+    }
+
+    // Check if newParentId is a descendant of groupId
+    const descendants = await this.getDescendantIds(groupId)
+    if (descendants.includes(newParentId)) {
+      throw new Error('Cannot move group to its own descendant (circular reference)')
+    }
+
+    return true
+  }
+
+  /**
+   * Get the root HQ for a given group
+   * @param groupId - The group ID
+   * @returns The root HQ group
+   */
+  async getRootHQ(groupId: number): Promise<GroupBy> {
+    const ancestors = await this.getAncestorIds(groupId)
+
+    if (ancestors.length === 0) {
+      // This group is already root
+      return this.findById(groupId)
+    }
+
+    // Get the top-most ancestor (root)
+    const rootId = ancestors[ancestors.length - 1]
+    return this.findById(rootId)
+  }
+
+  /**
+   * Calculate and update depth for a group and its descendants
+   * @param groupId - The group ID
+   * @param depth - The new depth value
+   */
+  async updateDepth(groupId: number, depth: number): Promise<void> {
+    await this.updateById(groupId, { depth })
+
+    // Update all descendants
+    const children = await this.find({ where: { parentId: groupId } })
+    await Promise.all(
+      children.map(child => this.updateDepth(child.id!, depth + 1))
+    )
+  }
 }
 
 const pluckActivities = <T extends TActivity>(i: T) => i.activities

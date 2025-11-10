@@ -1,4 +1,4 @@
-import { hasMany, model, property } from '@loopback/repository'
+import { belongsTo, hasMany, model, property } from '@loopback/repository'
 import { UserModifiableEntity } from './_user-modifiable-entity'
 
 import {
@@ -34,6 +34,29 @@ export class GroupBy extends UserModifiableEntity {
   @property({ type: 'string', required: true, jsonSchema: { enum: ['active', 'inactive'] } })
   status: 'active' | 'inactive'
 
+  // Hierarchy fields
+  @belongsTo(() => GroupBy, { name: 'parent' }, { mysql: { columnName: 'parentId' } })
+  parentId?: number
+
+  @property({
+    type: 'string',
+    required: true,
+    default: 'hq',
+    jsonSchema: { enum: ['hq', 'subsidiary', 'branch', 'department'] },
+  })
+  level: 'hq' | 'subsidiary' | 'branch' | 'department'
+
+  @property({
+    type: 'number',
+    required: true,
+    default: 0,
+    mysql: { dataType: 'int' },
+  })
+  depth: number
+
+  @hasMany(() => GroupBy, { keyTo: 'parentId' })
+  children?: GroupBy[]
+
   @hasMany(() => EmissionScope1FugitiveEmission) emissionScope1FugitiveEmissions: EmissionScope1FugitiveEmissionWithRelations[]
   @hasMany(() => EmissionScope1MobileCombustion) emissionScope1MobileCombustions: EmissionScope1MobileCombustionWithRelations[]
   @hasMany(() => EmissionScope1ProcessEmission) emissionScope1ProcessEmissions: EmissionScope1ProcessEmissionWithRelations[]
@@ -54,7 +77,11 @@ export class GroupBy extends UserModifiableEntity {
 }
 
 export interface GroupByRelations {
-  // describe navigational properties here
+  // Hierarchy relations
+  parent?: GroupBy
+  children?: GroupBy[]
+
+  // Emission relations
   emissionScope1FugitiveEmissions: EmissionScope1FugitiveEmissionWithRelations[]
   emissionScope1MobileCombustions: EmissionScope1MobileCombustionWithRelations[]
   emissionScope1ProcessEmissions: EmissionScope1ProcessEmissionWithRelations[]
