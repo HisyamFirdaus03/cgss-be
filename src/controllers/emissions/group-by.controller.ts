@@ -41,7 +41,21 @@ export class GroupByController {
       throw new HttpErrors[403]('Sorry you have reached maximum number of groups. Please reach out to admin')
     }
 
-    return this.thisRepo.create(groupBy)
+    // Validate hierarchy if parentId is provided
+    if (groupBy.parentId) {
+      const parent = await this.thisRepo.findById(groupBy.parentId)
+      if (!parent) {
+        throw new HttpErrors[400]('Parent group not found')
+      }
+      // Set depth based on parent
+      groupBy.depth = parent.depth + 1
+    } else {
+      // Root level group
+      groupBy.depth = 0
+    }
+
+    const created = await this.thisRepo.create(groupBy)
+    return created
   }
 
   @get('/group-by')
@@ -127,6 +141,189 @@ export class GroupByController {
   })
   async deleteById(@param.path.number('id') id: number): Promise<void> {
     await this.thisRepo.deleteById(id)
+  }
+
+  // ==================== HIERARCHY ENDPOINTS ====================
+
+  @get('/group-by/tree')
+  @response(200, {
+    description: 'Get hierarchical tree structure of all groups',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'array',
+          items: getModelSchemaRef(GroupBy, { includeRelations: true }),
+        },
+      },
+    },
+  })
+  async getTree(
+    @param.query.number('rootId') rootId?: number
+  ): Promise<GroupBy[]> {
+    return this.thisRepo.buildTree(rootId)
+  }
+
+  @get('/group-by/{id}/children')
+  @response(200, {
+    description: 'Get immediate children of a group',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'array',
+          items: getModelSchemaRef(GroupBy),
+        },
+      },
+    },
+  })
+  async getChildren(
+    @param.path.number('id') id: number
+  ): Promise<GroupBy[]> {
+    return this.thisRepo.find({
+      where: { parentId: id },
+      order: ['name ASC'],
+    })
+  }
+
+  @get('/group-by/{id}/descendants')
+  @response(200, {
+    description: 'Get all descendant IDs of a group (recursive)',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            groupId: { type: 'number' },
+            descendantIds: {
+              type: 'array',
+              items: { type: 'number' },
+            },
+          },
+        },
+      },
+    },
+  })
+  async getDescendants(
+    @param.path.number('id') id: number
+  ): Promise<{ groupId: number; descendantIds: number[] }> {
+    const descendantIds = await this.thisRepo.getDescendantIds(id)
+    return { groupId: id, descendantIds }
+  }
+
+  @get('/group-by/{id}/ancestors')
+  @response(200, {
+    description: 'Get all ancestor IDs of a group (parent chain)',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            groupId: { type: 'number' },
+            ancestorIds: {
+              type: 'array',
+              items: { type: 'number' },
+            },
+          },
+        },
+      },
+    },
+  })
+  async getAncestors(
+    @param.path.number('id') id: number
+  ): Promise<{ groupId: number; ancestorIds: number[] }> {
+    const ancestorIds = await this.thisRepo.getAncestorIds(id)
+    return { groupId: id, ancestorIds }
+  }
+
+  @get('/group-by/{id}/siblings')
+  @response(200, {
+    description: 'Get sibling groups (same parent)',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'array',
+          items: getModelSchemaRef(GroupBy),
+        },
+      },
+    },
+  })
+  async getSiblings(
+    @param.path.number('id') id: number
+  ): Promise<GroupBy[]> {
+    const siblingIds = await this.thisRepo.getSiblingIds(id)
+    if (siblingIds.length === 0) return []
+
+    return this.thisRepo.find({
+      where: { id: { inq: siblingIds } },
+      order: ['name ASC'],
+    })
+  }
+
+  @patch('/group-by/{id}/move')
+  @response(200, {
+    description: 'Move group to a new parent',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            message: { type: 'string' },
+            group: getModelSchemaRef(GroupBy),
+          },
+        },
+      },
+    },
+  })
+  async moveGroup(
+    @param.path.number('id') id: number,
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              newParentId: { type: 'number', nullable: true },
+            },
+          },
+        },
+      },
+    })
+    body: { newParentId: number | null }
+  ): Promise<{ success: boolean; message: string; group: GroupBy }> {
+    const { newParentId } = body
+
+    // Validate hierarchy (prevent circular references)
+    if (newParentId !== null) {
+      await this.thisRepo.validateHierarchy(id, newParentId)
+    }
+
+    // Get the group
+    const group = await this.thisRepo.findById(id)
+
+    // Calculate new depth
+    let newDepth = 0
+    if (newParentId !== null) {
+      const newParent = await this.thisRepo.findById(newParentId)
+      newDepth = newParent.depth + 1
+    }
+
+    // Update the group
+    await this.thisRepo.updateById(id, {
+      parentId: newParentId ?? undefined,
+      depth: newDepth,
+    })
+
+    // Update all descendants' depth
+    await this.thisRepo.updateDepth(id, newDepth)
+
+    // Get updated group
+    const updatedGroup = await this.thisRepo.findById(id)
+
+    return {
+      success: true,
+      message: `Group moved successfully to ${newParentId ? `parent ${newParentId}` : 'root level'}`,
+      group: updatedGroup,
+    }
   }
 
   @get('/group-by/optimize')
