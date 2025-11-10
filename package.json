@@ -25,6 +25,7 @@
     "docker:build": "docker build -t basic-lb4-jwt-casbin-auth .",
     "docker:run": "docker run -p 3000:3000 -d basic-lb4-jwt-casbin-auth",
     "migrate": "npm run rebuild && node ./dist/migrations/migrate",
+    "seed": "npm run build && node ./dist/migrations/run-seed-only",
     "preopenapi-spec": "npm run build",
     "openapi-spec": "node ./dist/openapi-spec",
     "prestart": "npm run rebuild",
