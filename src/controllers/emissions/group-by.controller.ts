@@ -26,12 +26,13 @@ export class GroupByController {
         'application/json': {
           schema: getModelSchemaRef(GroupBy, {
             title: 'NewGroupBy',
-            exclude: ['id'],
+            exclude: ['id', 'depth'], // depth is auto-calculated
+            optional: ['parentId'], // parentId is optional for root groups
           }),
         },
       },
     })
-    groupBy: Omit<GroupBy, 'id'>,
+    groupBy: Omit<GroupBy, 'id' | 'depth'>,
     @param.header.string('x-tenant-id') tenantId: string = 'demo'
   ): Promise<GroupBy> {
     const maxGroups = await this.companyInfoRepository.getMaxGroups(tenantId)
@@ -41,20 +42,22 @@ export class GroupByController {
       throw new HttpErrors[403]('Sorry you have reached maximum number of groups. Please reach out to admin')
     }
 
-    // Validate hierarchy if parentId is provided
+    // Validate hierarchy and calculate depth
+    let calculatedDepth = 0
     if (groupBy.parentId) {
       const parent = await this.thisRepo.findById(groupBy.parentId)
       if (!parent) {
         throw new HttpErrors[400]('Parent group not found')
       }
-      // Set depth based on parent
-      groupBy.depth = parent.depth + 1
-    } else {
-      // Root level group
-      groupBy.depth = 0
+      calculatedDepth = parent.depth + 1
     }
 
-    const created = await this.thisRepo.create(groupBy)
+    // Create with calculated depth
+    const created = await this.thisRepo.create({
+      ...groupBy,
+      depth: calculatedDepth,
+    } as GroupBy)
+
     return created
   }
 

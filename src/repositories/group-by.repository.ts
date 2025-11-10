@@ -67,9 +67,13 @@ export class GroupByRepository extends TimeStampRepositoryMixin<
 
   public readonly emissionProductions: HasManyRepositoryFactory<EmissionProduction, GroupById>
 
+  // Hierarchy relations
+  public readonly children: HasManyRepositoryFactory<GroupBy, GroupById>
+
   constructor(
     @inject(DatabaseConfig.DATABASE_LB4_PATH) dataSource: DemoDataSource,
     @repository.getter('UserRepository') userRepositoryGetter: Getter<UserRepository>,
+    @repository.getter('GroupByRepository') protected groupByRepositoryGetter: Getter<GroupByRepository>,
     @repository.getter('EmissionScope1FugitiveEmissionRepository')
     protected emissionScope1FugitiveEmissionGetter: Getter<EmissionScope1FugitiveEmissionRepository>,
     @repository.getter('EmissionScope1MobileCombustionRepository')
@@ -92,6 +96,10 @@ export class GroupByRepository extends TimeStampRepositoryMixin<
     protected emissionProductionGetter: Getter<EmissionProductionRepository>,
   ) {
     super(GroupBy, dataSource, userRepositoryGetter)
+
+    // Register hierarchy relations (children)
+    this.children = this.createHasManyRepositoryFactoryFor('children', groupByRepositoryGetter)
+    this.registerInclusionResolver('children', this.children.inclusionResolver)
 
     // prettier-ignore
     this.emissionScope1FugitiveEmissions = this.createHasManyRepositoryFactoryFor('emissionScope1FugitiveEmissions', emissionScope1FugitiveEmissionGetter)
